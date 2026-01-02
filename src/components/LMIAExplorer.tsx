@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, useCallback } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Search, Filter, Building2, MapPin, BarChart3, X, ChevronDown, ChevronUp, Globe, Download, ChevronLeft, ChevronRight } from "lucide-react";
 
 type LMIARecord = {
@@ -377,7 +377,6 @@ export default function LMIAExplorer() {
   const [stream, setStream] = useState("ALL");
   const [minLMIAs, setMinLMIAs] = useState("1");
   const [showAdvanced, setShowAdvanced] = useState(false);
-  const [searchFocused, setSearchFocused] = useState(false);
 
   useEffect(() => {
     fetch("/lmia_clean_all_canada.json")
@@ -783,8 +782,6 @@ export default function LMIAExplorer() {
                   placeholder={t.searchEmployers}
                   value={employer}
                   onChange={(e) => setEmployer(e.target.value)}
-                  onFocus={() => setSearchFocused(true)}
-                  onBlur={() => setSearchFocused(false)}
                   className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
                 />
                 {employer && (
