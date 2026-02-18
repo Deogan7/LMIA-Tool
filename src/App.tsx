@@ -4,7 +4,21 @@ import AuthPage from "./components/AuthPage";
 import LMIAExplorer from "./components/LMIAExplorer";
 
 function AppContent() {
-  const { user } = useAuth();
+  const { user, loading, isRecoveryMode } = useAuth();
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+        <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
+
+  // Show password-set form when arriving via invite/reset link
+  if (isRecoveryMode) {
+    return <AuthPage />;
+  }
+
   return user ? <LMIAExplorer /> : <AuthPage />;
 }
 
