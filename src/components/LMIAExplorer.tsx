@@ -26,6 +26,7 @@ type LMIARecord = {
   Province?: string;
   "Program Stream"?: string;
   "Positive LMIAs"?: number;
+  "NOC Title"?: string;
 };
 
 // ================================
@@ -162,6 +163,9 @@ const TRANSLATIONS: Record<Language, Record<string, string>> = {
     previous: "Previous",
     next: "Next",
     notDisclosed: "Not Disclosed",
+    jobType: "Job Type",
+    searchJobs: "Search jobs (e.g. Cook, Welder)...",
+    nocTitle: "Job Title",
     errorTitle: "Failed to Load Data",
     retry: "Retry",
   },
@@ -203,6 +207,9 @@ const TRANSLATIONS: Record<Language, Record<string, string>> = {
     previous: "Précédent",
     next: "Suivant",
     notDisclosed: "Non divulgué",
+    jobType: "Type d'emploi",
+    searchJobs: "Rechercher des emplois...",
+    nocTitle: "Titre du poste",
     errorTitle: "Échec du chargement",
     retry: "Réessayer",
   },
@@ -244,6 +251,9 @@ const TRANSLATIONS: Record<Language, Record<string, string>> = {
     previous: "Anterior",
     next: "Siguiente",
     notDisclosed: "No divulgado",
+    jobType: "Tipo de trabajo",
+    searchJobs: "Buscar empleos...",
+    nocTitle: "Título del puesto",
     errorTitle: "Error al cargar",
     retry: "Reintentar",
   },
@@ -285,6 +295,9 @@ const TRANSLATIONS: Record<Language, Record<string, string>> = {
     previous: "ਪਿਛਲਾ",
     next: "ਅਗਲਾ",
     notDisclosed: "ਪ੍ਰਗਟ ਨਹੀਂ ਕੀਤਾ",
+    jobType: "ਨੌਕਰੀ ਦੀ ਕਿਸਮ",
+    searchJobs: "ਨੌਕਰੀਆਂ ਖੋਜੋ...",
+    nocTitle: "ਨੌਕਰੀ ਦਾ ਸਿਰਲੇਖ",
     errorTitle: "ਡੇਟਾ ਲੋਡ ਅਸਫਲ",
     retry: "ਦੁਬਾਰਾ ਕੋਸ਼ਿਸ਼",
   },
@@ -326,6 +339,9 @@ const TRANSLATIONS: Record<Language, Record<string, string>> = {
     previous: "Zurück",
     next: "Weiter",
     notDisclosed: "Nicht offengelegt",
+    jobType: "Berufstyp",
+    searchJobs: "Jobs suchen...",
+    nocTitle: "Berufsbezeichnung",
     errorTitle: "Fehler beim Laden",
     retry: "Erneut versuchen",
   },
@@ -350,6 +366,7 @@ export default function LMIAExplorer() {
   const [province, setProvince] = useState("ALL");
   const [city, setCity] = useState("ALL");
   const [stream, setStream] = useState("ALL");
+  const [jobType, setJobType] = useState("");
   const [minLMIAs, setMinLMIAs] = useState("1");
 
   // Load data once on mount
@@ -395,6 +412,7 @@ export default function LMIAExplorer() {
               Province: prov,
               "Program Stream": (row["Program Stream"] as string)?.trim() || "",
               "Positive LMIAs": Number(row["Positive LMIAs"]) || 0,
+              "NOC Title": (row["NOC Title"] as string)?.trim() || "",
             } as LMIARecord;
           })
           .filter(
@@ -457,9 +475,15 @@ export default function LMIAExplorer() {
       ) {
         return false;
       }
+      if (
+        jobType.trim() &&
+        !(r["NOC Title"] || "").toLowerCase().includes(jobType.trim().toLowerCase())
+      ) {
+        return false;
+      }
       return true;
     });
-  }, [rows, employer, province, city, stream, minLMIAs]);
+  }, [rows, employer, province, city, stream, jobType, minLMIAs]);
 
   // Pagination
   const totalPages = Math.max(1, Math.ceil(filtered.length / rowsPerPage));
@@ -491,6 +515,7 @@ export default function LMIAExplorer() {
   // Active filters check
   const hasActiveFilters =
     employer !== "" ||
+    jobType !== "" ||
     province !== "ALL" ||
     city !== "ALL" ||
     stream !== "ALL" ||
@@ -499,6 +524,7 @@ export default function LMIAExplorer() {
   // Handlers
   const handleClearFilters = () => {
     setEmployer("");
+    setJobType("");
     setProvince("ALL");
     setCity("ALL");
     setStream("ALL");
@@ -531,7 +557,7 @@ export default function LMIAExplorer() {
   // Reset page on filter change
   useEffect(() => {
     setCurrentPage(1);
-  }, [employer, province, city, stream, minLMIAs]);
+  }, [employer, jobType, province, city, stream, minLMIAs]);
 
   // ================================
   // LOADING STATE
@@ -683,7 +709,7 @@ export default function LMIAExplorer() {
 
           <div className="p-5 space-y-4">
             {/* Filter grid */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-3">
               {/* Employer search */}
               <div>
                 <label className="block text-xs font-medium text-slate-600 mb-1.5">
@@ -700,6 +726,30 @@ export default function LMIAExplorer() {
                   {employer && (
                     <button
                       onClick={() => setEmployer("")}
+                      className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                    >
+                      <X className="h-3.5 w-3.5" />
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              {/* Job type search */}
+              <div>
+                <label className="block text-xs font-medium text-slate-600 mb-1.5">
+                  {t.jobType}
+                </label>
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400" />
+                  <input
+                    placeholder={t.searchJobs}
+                    value={jobType}
+                    onChange={(e) => setJobType(e.target.value)}
+                    className="w-full pl-9 pr-8 py-2 text-sm border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-colors placeholder:text-slate-400"
+                  />
+                  {jobType && (
+                    <button
+                      onClick={() => setJobType("")}
                       className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
                     >
                       <X className="h-3.5 w-3.5" />
@@ -821,8 +871,12 @@ export default function LMIAExplorer() {
                   <button
                     key={c}
                     onClick={() => {
-                      setProvince("ALL");
-                      setCity(c);
+                      if (city === c) {
+                        setCity("ALL");
+                      } else {
+                        setProvince("ALL");
+                        setCity(c);
+                      }
                     }}
                     className={`flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium transition-all ${
                       city === c
@@ -898,6 +952,9 @@ export default function LMIAExplorer() {
                     {t.employer}
                   </th>
                   <th className="px-5 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                    {t.nocTitle}
+                  </th>
+                  <th className="px-5 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">
                     {t.location}
                   </th>
                   <th className="px-5 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">
@@ -911,7 +968,7 @@ export default function LMIAExplorer() {
               <tbody className="divide-y divide-slate-100">
                 {filtered.length === 0 ? (
                   <tr>
-                    <td colSpan={4} className="px-5 py-16 text-center">
+                    <td colSpan={5} className="px-5 py-16 text-center">
                       <Search className="h-10 w-10 mx-auto text-slate-200 mb-3" />
                       <p className="text-sm font-medium text-slate-900 mb-1">{t.noRecords}</p>
                       <p className="text-xs text-slate-500">{t.tryFilters}</p>
@@ -929,6 +986,11 @@ export default function LMIAExplorer() {
                         </span>
                       </td>
                       <td className="px-5 py-3.5">
+                        <span className="text-sm text-slate-700">
+                          {r["NOC Title"] || t.notSpecified}
+                        </span>
+                      </td>
+                      <td className="px-5 py-3.5">
                         <div className="text-sm text-slate-900">{r.City}</div>
                         <div className="text-xs text-slate-400">
                           {r.Province} — {PROVINCE_NAMES[r.Province || ""]}
@@ -940,14 +1002,16 @@ export default function LMIAExplorer() {
                         </span>
                       </td>
                       <td className="px-5 py-3.5 text-right">
-                        <span className="text-sm font-semibold text-slate-900 tabular-nums">
-                          {r["Positive LMIAs"]?.toLocaleString() || 0}
-                        </span>
-                        {(r["Positive LMIAs"] ?? 0) >= 10 && (
-                          <span className="ml-2 text-[10px] bg-emerald-50 text-emerald-700 px-1.5 py-0.5 rounded font-medium">
-                            {t.highVolume}
+                        <div className="inline-flex items-center justify-end gap-2">
+                          {(r["Positive LMIAs"] ?? 0) >= 10 && (
+                            <span className="text-[10px] leading-tight bg-emerald-50 text-emerald-700 px-1.5 py-0.5 rounded font-medium text-center">
+                              High<br />Volume
+                            </span>
+                          )}
+                          <span className="text-sm font-semibold text-slate-900 tabular-nums">
+                            {r["Positive LMIAs"]?.toLocaleString() || 0}
                           </span>
-                        )}
+                        </div>
                       </td>
                     </tr>
                   ))
