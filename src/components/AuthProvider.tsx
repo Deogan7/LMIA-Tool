@@ -26,6 +26,14 @@ export function useAuth() {
   return ctx;
 }
 
+// Read the link type from the URL hash ONCE at module load, before the Supabase
+// client consumes and clears it. Invite emails arrive as `#...&type=invite`,
+// password-reset emails as `#...&type=recovery`. Both should land the user on
+// the "Set Password" screen — relying on the PASSWORD_RECOVERY event alone
+// misses invites (which fire SIGNED_IN instead).
+const initialAuthType = new URLSearchParams(window.location.hash.slice(1)).get("type");
+const arrivedViaEmailLink = initialAuthType === "invite" || initialAuthType === "recovery";
+
 function sessionToUser(session: Session | null): User | null {
   if (!session?.user) return null;
   return {
@@ -37,7 +45,9 @@ function sessionToUser(session: Session | null): User | null {
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
-  const [isRecoveryMode, setIsRecoveryMode] = useState(false);
+  // Start in recovery mode immediately if the user arrived via an invite or
+  // reset link, so they always see the "Set Password" form.
+  const [isRecoveryMode, setIsRecoveryMode] = useState(arrivedViaEmailLink);
 
   useEffect(() => {
     // Get the initial session (also picks up tokens from URL hash automatically)
